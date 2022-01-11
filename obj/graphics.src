@@ -1,0 +1,503 @@
+; Zilog eZ80 ANSI C Compiler Release 3.4
+; -optsize -noreduceopt -nomodsect -peephole -globalopt
+; -localcse -const=ROM 
+	FILE	"SRC\GRAPHICS.C"
+	.assume ADL=1
+	SEGMENT CODE
+;    1	#include <graphx.h>
+;    2	#include <tice.h>
+;    3	#include "graphics.h"
+;    4	
+;    5	void message_box(const char* text) {
+_message_box:
+	CALL	__frameset0
+;    6	    // the main box
+;    7	    draw_rect(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 170, 100, COLOR_BLACK, true);
+	LD	BC,1
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	LD	BC,100
+	PUSH	BC
+	LD	BC,170
+	PUSH	BC
+	LD	BC,120
+	PUSH	BC
+	LD	BC,160
+	PUSH	BC
+	CALL	_draw_rect
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;    8	    
+;    9	    os_SetCursorPos(3, 7);
+	LD	BC,7
+	PUSH	BC
+	LD	BC,3
+	PUSH	BC
+	CALL	_os_SetCursorPos
+	POP	BC
+	POP	BC
+;   10	    os_PutStrFull(text);   
+	LD	BC,(IX+6)
+	PUSH	BC
+	CALL	_os_PutStrFull
+	POP	BC
+;   11	
+;   12	    // draws the ok box 
+;   13	    draw_rect(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 25, 60, 20, COLOR_BLACK, true);
+	LD	BC,1
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	LD	BC,20
+	PUSH	BC
+	LD	BC,60
+	PUSH	BC
+	LD	BC,145
+	PUSH	BC
+	LD	BC,160
+	PUSH	BC
+	CALL	_draw_rect
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;   14	    os_SetCursorPos(5, 12);
+	LD	BC,12
+	PUSH	BC
+	LD	BC,5
+	PUSH	BC
+	CALL	_os_SetCursorPos
+	POP	BC
+	POP	BC
+;   15	    os_PutStrFull("OK");
+	LD	BC,L__0
+	PUSH	BC
+	CALL	_os_PutStrFull
+	POP	BC
+;   16	
+;   17	    // waits for key press
+;   18	    while (!os_GetCSC());
+L_1:
+	CALL	_os_GetCSC
+	OR	A,A
+	JR	Z,L_1
+;   19	
+;   20	    // clears screen
+;   21	    fill_screen(COLOR_WHITE);
+	LD	BC,255
+	PUSH	BC
+	CALL	_fill_screen
+	POP	BC
+;   22	}
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _message_box ***************************
+;Name                         Addr/Register   Size   Type
+;_fill_screen                        IMPORT  -----   function
+;_os_GetCSC                          IMPORT  -----   function
+;_os_PutStrFull                      IMPORT  -----   function
+;_os_SetCursorPos                    IMPORT  -----   function
+;_draw_rect                          IMPORT  -----   function
+;text                                  IX+6      3   parameter
+
+
+; Stack Frame Size: 9 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+	SEGMENT STRSECT
+L__0:
+	DB	"OK"
+	DB	0
+	SEGMENT CODE
+;   23	
+;   24	void draw_rect(int _x, int _y, int width, int height, int col, bool outline) {    
+_draw_rect:
+	LD	HL,-15
+	CALL	__frameset
+;   25	    // centers the x and y values
+;   26	
+;   27	    // each pixel is 2 bytes
+;   28	    uint16_t* ptr;
+;   29	    int x, y;
+;   30	
+;   31	    // centers the given coords
+;   32	    _x -= width / 2;
+	LD	BC,2
+	LD	HL,(IX+12)
+	CALL	__idivs
+	LD	DE,HL
+	LD	HL,(IX+6)
+;   33	    _y -= height / 2;
+	LD	BC,2
+;   34	    ptr = (uint16_t*)gfx_vram + _y * SCREEN_WIDTH + _x;
+	LD	(IX+-12),BC	; spill
+	LD	BC,13893632
+	LD	(IX+-15),BC	; spill
+	LD	BC,(IX+-12)	; unspill
+	OR	A,A
+	SBC	HL,DE
+	OR	A,A
+	LD	(IX+6),HL
+	LD	HL,(IX+15)
+	CALL	__idivs
+	LD	DE,HL
+	LD	HL,(IX+9)
+	SBC	HL,DE
+	LD	(IX+9),HL
+	LD	BC,640
+	CALL	__imuls
+	LD	BC,(IX+-15)	; unspill
+	ADD	HL,BC
+	LD	BC,HL
+	LD	HL,(IX+6)
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	(IX+-3),HL
+;   35	    if (!outline) {
+	LD	A,(IX+21)
+	OR	A,A
+	JR	NZ,L_15
+;   36	        for (y = 0; y < height; y++) {
+	LD	BC,0
+	LD	(IX+-9),BC
+	JR	L_13
+L_11:
+;   37	            for (x = 0; x < width; x++) {
+	LD	BC,0
+	LD	(IX+-6),BC
+	JR	L_9
+L_7:
+;   38	                *ptr = col;
+	LD	HL,(IX+-3)
+	LD	BC,(IX+18)
+	LD	(HL),C
+	INC	HL
+	LD	(HL),B
+;   39	                ptr++;
+	LD	IY,(IX+-3)
+	LEA	IY,IY+2
+	LD	(IX+-3),IY
+	LD	BC,(IX+-6)
+	INC	BC
+	LD	(IX+-6),BC
+;   40	            }
+L_9:
+	LD	BC,(IX+12)
+	LD	HL,(IX+-6)
+	OR	A,A
+	SBC	HL,BC
+	JP	M,L_7
+;   41	            ptr += SCREEN_WIDTH - width;
+	LD	DE,(IX+12)
+	LD	BC,(IX+-3)
+	LD	HL,320
+	OR	A,A
+	SBC	HL,DE
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	(IX+-3),HL
+	LD	BC,(IX+-9)
+	INC	BC
+	LD	(IX+-9),BC
+;   42	        }
+L_13:
+	LD	BC,(IX+15)
+	LD	HL,(IX+-9)
+	OR	A,A
+	SBC	HL,BC
+	CALL	__setflag
+	JP	M,L_11
+	JR	L_16
+;   43	    } else {
+L_15:
+;   44	        draw_horiz(_x, _y, width, col);
+	LD	BC,(IX+18)
+	PUSH	BC
+	LD	BC,(IX+12)
+	PUSH	BC
+	LD	BC,(IX+9)
+	PUSH	BC
+	LD	BC,(IX+6)
+	PUSH	BC
+	CALL	_draw_horiz
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;   45	        draw_vert(_x, _y, height, col);
+	LD	BC,(IX+18)
+	PUSH	BC
+	LD	BC,(IX+15)
+	PUSH	BC
+	LD	BC,(IX+9)
+	PUSH	BC
+	LD	BC,(IX+6)
+	PUSH	BC
+	CALL	_draw_vert
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;   46	
+;   47	        draw_horiz(_x, _y + height, width, col);
+	LD	BC,(IX+18)
+	PUSH	BC
+	LD	BC,(IX+12)
+	PUSH	BC
+	LD	BC,(IX+15)
+	LD	HL,(IX+9)
+	ADD	HL,BC
+	PUSH	HL
+	LD	BC,(IX+6)
+	PUSH	BC
+	CALL	_draw_horiz
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;   48	        draw_vert(_x + width, _y, height, col);
+	LD	BC,(IX+18)
+	PUSH	BC
+	LD	BC,(IX+15)
+	PUSH	BC
+	LD	BC,(IX+9)
+	PUSH	BC
+	LD	BC,(IX+12)
+	LD	HL,(IX+6)
+	ADD	HL,BC
+	PUSH	HL
+	CALL	_draw_vert
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;   49	    }
+;   50	
+;   51	}
+L_16:
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _draw_rect ***************************
+;Name                         Addr/Register   Size   Type
+;_draw_vert                          IMPORT  -----   function
+;_draw_horiz                         IMPORT  -----   function
+;y                                     IX-9      3   variable
+;x                                     IX-6      3   variable
+;ptr                                   IX-3      3   variable
+;outline                              IX+21      1   parameter
+;col                                  IX+18      3   parameter
+;height                               IX+15      3   parameter
+;width                                IX+12      3   parameter
+;_y                                    IX+9      3   parameter
+;_x                                    IX+6      3   parameter
+
+
+; Stack Frame Size: 39 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+;   52	
+;   53	void draw_horiz(int x1, int y1, int len, uint16_t col) {
+_draw_horiz:
+	LD	HL,-6
+	CALL	__frameset
+;   54	    uint16_t* ptr = (uint16_t*)gfx_vram + y1 * SCREEN_WIDTH + x1;
+	LD	BC,640
+	LD	HL,(IX+9)
+	CALL	__imuls
+	LD	BC,13893632
+	ADD	HL,BC
+	LD	BC,HL
+	LD	HL,(IX+6)
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	(IX+-3),HL
+;   55	    int i;
+;   56	
+;   57	    for (i = 0; i <= len; i++) {
+	LD	BC,0
+	LD	(IX+-6),BC
+	JR	L_21
+L_19:
+;   58	        *ptr = col;
+	LD	HL,(IX+-3)
+	LD	A,(IX+15)
+	LD	(HL),A
+	INC	HL
+	LD	A,(IX+16)
+	LD	(HL),A
+;   59	        ptr++;
+	LD	IY,(IX+-3)
+	LEA	IY,IY+2
+	LD	(IX+-3),IY
+	LD	BC,(IX+-6)
+	INC	BC
+	LD	(IX+-6),BC
+;   60	    }
+L_21:
+	LD	BC,(IX+-6)
+	LD	HL,(IX+12)
+	OR	A,A
+	SBC	HL,BC
+	CALL	__setflag
+	JP	P,L_19
+;   61	}
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _draw_horiz ***************************
+;Name                         Addr/Register   Size   Type
+;i                                     IX-6      3   variable
+;ptr                                   IX-3      3   variable
+;col                                  IX+15      2   parameter
+;len                                  IX+12      3   parameter
+;y1                                    IX+9      3   parameter
+;x1                                    IX+6      3   parameter
+
+
+; Stack Frame Size: 24 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+;   62	
+;   63	void draw_vert(int x1, int y1, int len, uint16_t col) {
+_draw_vert:
+	LD	HL,-6
+	CALL	__frameset
+;   64	    uint16_t* ptr = (uint16_t*)gfx_vram + y1 * SCREEN_WIDTH + x1;
+	LD	BC,640
+	LD	HL,(IX+9)
+	CALL	__imuls
+	LD	BC,13893632
+	ADD	HL,BC
+	LD	BC,HL
+	LD	HL,(IX+6)
+	ADD	HL,HL
+	ADD	HL,BC
+	LD	(IX+-6),HL
+;   65	    int i;
+;   66	
+;   67	    for (i = 0; i < len; i++) {
+	LD	BC,0
+	LD	(IX+-3),BC
+	JR	L_26
+L_24:
+;   68	        *ptr = col;
+	LD	HL,(IX+-6)
+	LD	A,(IX+15)
+	LD	(HL),A
+	INC	HL
+	LD	A,(IX+16)
+	LD	(HL),A
+;   69	        ptr += SCREEN_WIDTH;
+	LD	HL,(IX+-6)
+	LD	BC,640
+	ADD	HL,BC
+	LD	(IX+-6),HL
+	LD	BC,(IX+-3)
+	INC	BC
+	LD	(IX+-3),BC
+;   70	    }
+L_26:
+	LD	BC,(IX+12)
+	LD	HL,(IX+-3)
+	OR	A,A
+	SBC	HL,BC
+	CALL	__setflag
+	JP	M,L_24
+;   71	}
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _draw_vert ***************************
+;Name                         Addr/Register   Size   Type
+;ptr                                   IX-6      3   variable
+;i                                     IX-3      3   variable
+;col                                  IX+15      2   parameter
+;len                                  IX+12      3   parameter
+;y1                                    IX+9      3   parameter
+;x1                                    IX+6      3   parameter
+
+
+; Stack Frame Size: 24 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+;   72	
+;   73	// Colors in the entire lcd with the specified color
+;   74	void fill_screen(uint8_t col) {
+_fill_screen:
+	LD	HL,-3
+	CALL	__frameset
+;   75	    int i = 0;
+	LD	BC,0
+	LD	(IX+-3),BC
+;   76	    
+;   77	    while (i < 153600) {
+	JR	L_29
+L_30:
+;   78	        gfx_vram[i] = col;
+	LD	BC,13893632
+	LD	HL,(IX+-3)
+	ADD	HL,BC
+	LD	A,(IX+6)
+	LD	(HL),A
+;   79	        i++;
+	LD	BC,(IX+-3)
+	INC	BC
+	LD	(IX+-3),BC
+;   80	    }
+L_29:
+	LD	BC,153600
+	LD	HL,(IX+-3)
+	OR	A,A
+	SBC	HL,BC
+	CALL	__setflag
+	JP	M,L_30
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _fill_screen ***************************
+;Name                         Addr/Register   Size   Type
+;i                                     IX-3      3   variable
+;col                                   IX+6      1   parameter
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+	XREF _os_GetCSC:ROM
+	XREF _os_PutStrFull:ROM
+	XREF _os_SetCursorPos:ROM
+	XREF __idivs:ROM
+	XREF __imuls:ROM
+	XREF __frameset0:ROM
+	XREF __frameset:ROM
+	XREF __setflag:ROM
+	XDEF _fill_screen
+	XDEF _draw_vert
+	XDEF _draw_horiz
+	XDEF _draw_rect
+	XDEF _message_box
+	END

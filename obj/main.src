@@ -1,0 +1,1556 @@
+; Zilog eZ80 ANSI C Compiler Release 3.4
+; -optsize -noreduceopt -nomodsect -peephole -globalopt
+; -localcse -const=ROM 
+	FILE	"SRC\MAIN.C"
+	.assume ADL=1
+	SEGMENT CODE
+_fsize:
+	LD	HL,-3
+	CALL	__frameset
+	LD	BC,2
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	LD	BC,(IX+6)
+	PUSH	BC
+	CALL	_fseek
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	LD	BC,(IX+6)
+	PUSH	BC
+	CALL	_ftell
+	POP	BC
+	LD	(IX+-3),HL
+	LD	IY,(IX+6)
+	LD	C,(IY+0)
+	LD	B,0
+	PUSH	BC
+	CALL	_ti_Rewind
+	POP	BC
+	LD	HL,(IX+-3)
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _fsize ***************************
+;Name                         Addr/Register   Size   Type
+;_ti_Rewind                          IMPORT  -----   function
+;_ftell                              IMPORT  -----   function
+;_fseek                              IMPORT  -----   function
+;sz                                    IX-3      3   variable
+;hFile                                 IX+6      3   parameter
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+;    1	#include <stdio.h>
+;    2	#include <keypadc.h>
+;    3	#include <stdlib.h>
+;    4	#include <fileioc.h>
+;    5	#include <tice.h>
+;    6	
+;    7	#include "file.h"
+;    8	#include "graphics.h"
+;    9	#include "helper.h"
+;   10	
+;   11	
+;   12	int main(void) {
+_main:
+;   13	    FILE* hFile;
+;   14	    uint16_t curChar;
+;   15	    bool caps = false;
+;   16	    char data[1000] = {0};
+;   17	    char buf[20];
+;   18	    int sz = 0;
+;   19	
+;   20	    // fills the screen with white
+	LD	HL,-1009
+	CALL	__frameset
+	LD	(IX+-3),0
+	LD	HL,IX
+	LD	BC,-1009
+	ADD	HL,BC
+	LD	DE,HL
+	LD	HL,_0temp1
+	LD	BC,1000
+	LDIR	
+	LD	BC,0
+	LD	(IX+-6),BC
+;   21	    fill_screen(COLOR_WHITE);
+	LD	BC,255
+	PUSH	BC
+	CALL	_fill_screen
+	POP	BC
+;   22	    // sets cursor at the top left of screen
+;   23	    os_SetCursorPos(0, 0);
+	LD	BC,0
+	PUSH	BC
+	PUSH	BC
+	CALL	_os_SetCursorPos
+	POP	BC
+	POP	BC
+;   24	
+;   25	    message_box("test message");
+	LD	BC,L__1
+	PUSH	BC
+	CALL	_message_box
+	POP	BC
+;   26	
+;   27	    read_data(data, "file.txt", 0);
+	LD	BC,0
+	PUSH	BC
+	LD	BC,L__2
+	PUSH	BC
+	LD	HL,IX
+	LD	BC,-1009
+	ADD	HL,BC
+	LD	BC,HL
+	PUSH	BC
+	CALL	_read_data
+	POP	BC
+	POP	BC
+	POP	BC
+;   28	
+;   29	    os_PutStrFull(data);
+	LD	HL,IX
+	LD	BC,-1009
+	ADD	HL,BC
+	LD	BC,HL
+	PUSH	BC
+	CALL	_os_PutStrFull
+	POP	BC
+;   30	
+;   31	    curChar = os_GetKey();
+	CALL	_os_GetKey
+	LD	(IX+-2),L
+	LD	(IX+-1),H
+;   32	
+;   33	    while (curChar != KEY_CLEAR) {
+	JR	L_13
+L_14:
+;   34	        curChar = os_GetKey();
+	CALL	_os_GetKey
+	LD	(IX+-2),L
+	LD	(IX+-1),H
+;   35	
+;   36	        if (curChar == KEY_Y_EQUALS) {
+	LD	HL,(IX+-2)
+	LD.LIS	BC,73
+	OR	A,A
+	SBC.SIS	HL,BC
+	JR	NZ,L_4
+;   37	            save_data("file.txt", data, sz, "a");
+	LD	BC,L__4
+	PUSH	BC
+	LD	BC,(IX+-6)
+	PUSH	BC
+	LD	HL,IX
+	LD	BC,-1009
+	ADD	HL,BC
+	LD	BC,HL
+	PUSH	BC
+	LD	BC,L__5
+	PUSH	BC
+	CALL	_save_data
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;   38	            continue;
+	JR	L_13
+;   39	        }
+L_4:
+;   40	
+;   41	        
+;   42	
+;   43	        if (curChar == KEY_WINDOW) {
+	LD.LIS	BC,72
+	LD	HL,(IX+-2)
+	OR	A,A
+	SBC.SIS	HL,BC
+	JR	NZ,L_10
+;   44	            clear_file("file.txt");
+	LD	BC,L__7
+	PUSH	BC
+	CALL	_clear_file
+	POP	BC
+;   45	            continue;
+	JR	L_13
+;   46	        }
+L_10:
+;   47	
+;   48	        // check to toggle on caps lock
+;   49	        if (curChar == KEY_POWER) {
+	LD.LIS	BC,132
+	LD	HL,(IX+-2)
+	OR	A,A
+	SBC.SIS	HL,BC
+	JR	NZ,L_11
+;   50	            caps = !caps;
+	LD	A,(IX+-3)
+	OR	A,A
+	JR	NZ,L_6
+	LD	BC,1
+	LD	(IX+-9),BC
+	JR	L_7
+L_6:
+	LD	BC,0
+	LD	(IX+-9),BC
+L_7:
+	LD	A,(IX+-9)
+	LD	(IX+-3),A
+;   51	            continue;
+	JR	L_13
+;   52	        }
+L_11:
+;   53	        // converts the ti scancode to an ascii char
+;   54	        curChar = code_to_char((int24_t)curChar, caps);
+	LD	C,(IX+-3)
+	LD	B,0
+	PUSH	BC
+	LD	BC,(IX+-2)
+	CALL	__stoiu
+	PUSH	HL
+	CALL	_code_to_char
+	POP	BC
+	POP	BC
+	LD	B,A
+	SEXT	HL
+	LD	(IX+-2),B
+	LD	(IX+-1),H
+;   55	        
+;   56	        data[sz] = curChar;
+	LD	HL,IX
+	LD	BC,-1009
+	ADD	HL,BC
+	LD	BC,(IX+-6)
+	ADD	HL,BC
+	LD	A,(IX+-2)
+	LD	(HL),A
+;   57	        sz++;
+	LD	BC,(IX+-6)
+	INC	BC
+	LD	(IX+-6),BC
+;   58	        put_char(curChar);
+	LD	C,(IX+-2)
+	LD	B,0
+	PUSH	BC
+	CALL	_put_char
+	POP	BC
+;   59	    }
+L_13:
+	LD.LIS	BC,9
+	LD	HL,(IX+-2)
+	OR	A,A
+	SBC.SIS	HL,BC
+	JR	NZ,L_14
+	OR	A,A
+;   60	    return 0;
+	SBC	HL,HL
+;   61	}
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _main ***************************
+;Name                         Addr/Register   Size   Type
+;_put_char                           IMPORT  -----   function
+;_code_to_char                       IMPORT  -----   function
+;_clear_file                         IMPORT  -----   function
+;_save_data                          IMPORT  -----   function
+;_os_GetKey                          IMPORT  -----   function
+;_os_PutStrFull                      IMPORT  -----   function
+;_read_data                          IMPORT  -----   function
+;_message_box                        IMPORT  -----   function
+;_os_SetCursorPos                    IMPORT  -----   function
+;_fill_screen                        IMPORT  -----   function
+;_0temp1                             STATIC   1000   variable
+;data                               IX-1009   1000   variable
+;temp8                                 IX-9      3   variable
+;sz                                    IX-6      3   variable
+;caps                                  IX-3      1   variable
+;curChar                               IX-2      2   variable
+
+
+; Stack Frame Size: 1015 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+	SEGMENT STRSECT
+L__1:
+	DB	"test message"
+	DB	0
+L__2:
+	DB	"file.txt"
+	DB	0
+L__4:
+	DB	"a"
+	DB	0
+L__5:
+	DB	"file.txt"
+	DB	0
+L__7:
+	DB	"file.txt"
+	DB	0
+	SEGMENT TEXT
+_0temp1:
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	DB	0
+	SEGMENT CODE
+;   62	
+;   63	int maina(void)
+;   64	{
+_maina:
+	LD	HL,-40
+	CALL	__frameset
+;   65	    int i;
+;   66	// 9
+;   67	    uint16_t n;
+;   68	    real_t r;
+;   69	    char res[20];
+;   70	
+;   71	    // sets screen to white
+;   72	    fill_screen(0xFF);
+	LD	BC,255
+	PUSH	BC
+	CALL	_fill_screen
+	POP	BC
+;   73	    
+;   74	    n = os_GetKey();
+	CALL	_os_GetKey
+	LD	(IX+-2),L
+	LD	(IX+-1),H
+;   75	    r = os_Int24ToReal(n);
+	LD	BC,(IX+-2)
+	CALL	__stoiu
+	PUSH	HL
+	PEA	IX+-40
+	CALL	_os_Int24ToReal
+	POP	BC
+	POP	BC
+	LEA	DE,IX+-11
+;   76	    
+;   77	    os_RealToStr(res, &r, 14, 0, 1);
+	LD	BC,1
+	PUSH	BC
+	LD	BC,0
+	PUSH	BC
+	LD	BC,14
+	PUSH	BC
+	PEA	IX+-11
+	PEA	IX+-31
+	LD	BC,9
+	LDIR	
+	CALL	_os_RealToStr
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+	POP	BC
+;   78	    os_PutStrFull(res);
+	PEA	IX+-31
+	CALL	_os_PutStrFull
+	POP	BC
+;   79	    while (!os_GetCSC());
+L_18:
+	CALL	_os_GetCSC
+	OR	A,A
+	JR	Z,L_18
+	OR	A,A
+;   80	    return 0;
+	SBC	HL,HL
+;   81	}
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _maina ***************************
+;Name                         Addr/Register   Size   Type
+;_os_GetCSC                          IMPORT  -----   function
+;_os_PutStrFull                      IMPORT  -----   function
+;_os_RealToStr                       IMPORT  -----   function
+;_os_Int24ToReal                     IMPORT  -----   function
+;_os_GetKey                          IMPORT  -----   function
+;_fill_screen                        IMPORT  -----   function
+;res                                  IX-31     20   variable
+;r                                    IX-11      9   variable
+;n                                     IX-2      2   variable
+
+
+; Stack Frame Size: 46 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+;   82	
+;   83	
+;   84	
+;   85	void put_char(char c) {
+_put_char:
+	LD	HL,-2
+	CALL	__frameset
+;   86	    char buf[2];
+;   87	    buf[0] = c;
+	LD	A,(IX+6)
+	LD	(IX+-2),A
+;   88	    buf[1] = '\0';
+	LEA	HL,IX+-2
+;   89	    os_PutStrFull(buf);
+	PEA	IX+-2
+	INC	HL
+	LD	(HL),0
+	CALL	_os_PutStrFull
+	POP	BC
+;   90	}
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _put_char ***************************
+;Name                         Addr/Register   Size   Type
+;_os_PutStrFull                      IMPORT  -----   function
+;buf                                   IX-2      2   variable
+;c                                     IX+6      1   parameter
+
+
+; Stack Frame Size: 11 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+;   91	
+;   92	char code_to_char(int24_t code, bool caps) {
+_code_to_char:
+	CALL	__frameset0
+;   93	    if (code == KEY_CLEAR) 
+	LD	BC,9
+	LD	HL,(IX+6)
+	OR	A,A
+	SBC	HL,BC
+	JR	NZ,L_25
+;   94	        return KEY_CLEAR;
+	LD	A,9
+	JR	L_34
+L_25:
+;   95	
+;   96	    // dealing with numbers
+;   97	    if (code >= KEY_ZERO && code <= KEY_NINE) {
+	LD	BC,142
+	LD	HL,(IX+6)
+	OR	A,A
+	SBC	HL,BC
+	JP	M,L_30
+	LD	BC,(IX+6)
+	LD	HL,151
+	OR	A,A
+	SBC	HL,BC
+	CALL	__setflag
+	JP	M,L_30
+;   98	        return code - 94;
+	LD	A,(IX+6)
+	ADD	A,-94
+	JR	L_34
+;   99	    }
+L_30:
+;  100	
+;  101	    // if the code is an operation key (+, -, *, /)
+;  102	    switch (code) {
+	LD	HL,(IX+6)
+	CALL	__seqcase
+L__18:
+	DW	4
+	DW	128
+	DB	0
+	DW24	L_26	
+
+	DW24	L_27	
+
+	DW24	L_28	
+
+	DW24	L_29	
+
+	DW24	L_32	
+
+;  103	    case 128:
+L_26:
+;  104	        return '+';
+	LD	A,43
+	JR	L_34
+;  105	    case 129:
+L_27:
+;  106	        return '-';
+	LD	A,45
+	JR	L_34
+;  107	    case 130:
+L_28:
+;  108	        return '*';
+	LD	A,42
+	JR	L_34
+;  109	    case 131:
+L_29:
+;  110	        return '/';
+	LD	A,47
+	JR	L_34
+;  111	    }
+L_32:
+;  112	
+;  113	    if (!caps)
+	LD	A,(IX+9)
+	OR	A,A
+	JR	NZ,L_33
+;  114	        return code - 57;
+	LD	A,(IX+6)
+	ADD	A,-57
+	JR	L_34
+L_33:
+;  115	    // return capital letter
+;  116	    return code - 89;
+	LD	A,(IX+6)
+	ADD	A,-89
+;  117	    
+;  118	}
+L_34:
+	LD	SP,IX
+	POP	IX
+	RET	
+
+
+;**************************** _code_to_char ***************************
+;Name                         Addr/Register   Size   Type
+;caps                                  IX+9      1   parameter
+;code                                  IX+6      3   parameter
+
+
+; Stack Frame Size: 12 (bytes)
+;       Spill Code: 0 (instruction)
+
+
+	XREF _fill_screen:ROM
+	XREF _message_box:ROM
+	XREF _clear_file:ROM
+	XREF _read_data:ROM
+	XREF _save_data:ROM
+	XREF _ftell:ROM
+	XREF _fseek:ROM
+	XREF _ti_Rewind:ROM
+	XREF _os_GetCSC:ROM
+	XREF _os_GetKey:ROM
+	XREF _os_RealToStr:ROM
+	XREF _os_Int24ToReal:ROM
+	XREF _os_PutStrFull:ROM
+	XREF _os_SetCursorPos:ROM
+	XREF __stoiu:ROM
+	XREF __frameset0:ROM
+	XREF __frameset:ROM
+	XREF __setflag:ROM
+	XREF __seqcase:ROM
+	XDEF _code_to_char
+	XDEF _put_char
+	XDEF _maina
+	XDEF _main
+	END
